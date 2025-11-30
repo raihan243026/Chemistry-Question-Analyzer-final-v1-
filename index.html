@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemistry Question Analyzer (CHEM-2301)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-500" data-theme="light">
+
+    <!-- Global Styles for Theme -->
+    <style>
+        /* Base Colors */
+        .primary-bg { @apply bg-white dark:bg-gray-800; }
+        .primary-text { @apply text-gray-800 dark:text-gray-100; }
+        .accent-bg { @apply bg-blue-600; }
+        .accent-text { @apply text-blue-600 dark:text-blue-400; }
+        .card-bg { @apply bg-white dark:bg-gray-700 shadow-lg; }
+
+        /* Dark Theme Overrides */
+        [data-theme="dark"] .accent-text { @apply text-blue-400; }
+        [data-theme="dark"] .accent-bg { @apply bg-blue-700; }
+
+        /* Red Theme Overrides */
+        [data-theme="red"] { @apply bg-red-900 text-red-50; }
+        [data-theme="red"] .primary-bg { @apply bg-red-800; }
+        [data-theme="red"] .primary-text { @apply text-red-50; }
+        [data-theme="red"] .accent-bg { @apply bg-red-600; }
+        [data-theme="red"] .accent-text { @apply text-red-400; }
+        [data-theme="red"] .card-bg { @apply bg-red-800 shadow-xl; }
+        [data-theme="red"] .border-accent { @apply border-red-500; }
+        [data-theme="red"] input { @apply bg-red-700 text-red-50 border-red-600 placeholder-red-300; }
+
+        /* Common Styles */
+        .border-accent { @apply border-blue-500 dark:border-blue-400; }
+    </style>
+
+    <!-- Navigation Bar -->
+    <nav class="primary-bg shadow sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo/Title -->
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold accent-text transition-colors duration-500">
+                        CHEM-2301 Analyzer
+                    </h1>
+                </div>
+
+                <!-- Search and Theme Toggle -->
+                <div class="flex items-center space-x-4">
+                    <!-- Search Bar -->
+                    <div class="relative w-40 sm:w-64">
+                        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" id="search-input" placeholder="Search questions..."
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 transition-all duration-300"
+                            oninput="filterQuestions(event.target.value)">
+                    </div>
+
+                    <!-- Theme Toggle Button -->
+                    <button id="theme-toggle" class="p-2 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 accent-bg hover:accent-bg/80 text-white" onclick="toggleTheme()">
+                        <!-- Icon Placeholder (will update dynamically) -->
+                        <svg id="theme-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h2 class="text-2xl sm:text-3xl font-extrabold mb-6 primary-text">Past Semester Question Analysis</h2>
+        <div id="questions-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Questions will be dynamically inserted here -->
+        </div>
+
+        <!-- No Results Message -->
+        <div id="no-results" class="hidden text-center mt-12 p-8 border-2 border-dashed rounded-xl accent-text">
+            <p class="text-xl font-semibold">No Questions Found</p>
+            <p class="mt-2">Try adjusting your search criteria.</p>
+        </div>
+    </main>
+
+    <script>
+        // --- 1. PRE-PROCESSED QUESTION DATA ---
+        // Manually cleaned, consolidated, and structured data from the PDF
+        const questionsData = [
+            {
+                text: "What are the Ideal Solution and Henry's Law?",
+                marks: 5,
+                semesters: ["Spring 2025"],
+                isImportant: true,
+                cleanText: "ideal solution henry's law"
+            },
+            {
+                text: "Discuss the electrolysis process considering an electrolytic cell.",
+                marks: 5,
+                semesters: ["Spring 2025", "Autumn 2023", "Autumn 2021"],
+                isImportant: true,
+                cleanText: "electrolysis process electrolytic cell"
+            },
+            {
+                text: "Define the Rate of reaction, Order of Reaction and Rate Law.",
+                marks: 5,
+                semesters: ["Spring 2025", "Autumn 2024", "Spring 2024", "Autumn 2023"],
+                isImportant: true,
+                cleanText: "rate of reaction order rate law"
+            },
+            {
+                text: "Derive an equation for the 1st order reaction or 'A → Products'. (The common question variant is 'Calculate the first order reaction.')",
+                marks: 5,
+                semesters: ["Spring 2025", "Spring 2024", "Autumn 2023", "Spring 2023"],
+                isImportant: true,
+                cleanText: "derive equation first order reaction"
+            },
+            {
+                text: "How do we increase Ammonia Gas (NH3) production as per Le-Chatelier Principle controlling Temperature and Pressure? N₂ + 3H₂ ⇌ 2NH₃; ΔH = -92KJ",
+                marks: 5,
+                semesters: ["Spring 2025", "Autumn 2024", "Spring 2023", "Autumn 2021"],
+                isImportant: true,
+                cleanText: "ammonia nh3 le-chatelier principle haber's process"
+            },
+            {
+                text: "What happened when a solution is shaken up with two liquids and discuss the issue as per distribution law? (Related to Nernst Distribution Law)",
+                marks: 5,
+                semesters: ["Spring 2025", "Spring 2023", "Autumn 2024", "Spring 2024"],
+                isImportant: true,
+                cleanText: "distribution law nernst two liquids"
+            },
+            {
+                text: "What are the differences between Ionization and Dissociation process? Discuss with appropriate examples.",
+                marks: 5,
+                semesters: ["Spring 2024", "Autumn 2023", "Spring 2023"],
+                isImportant: true,
+                cleanText: "ionization dissociation difference"
+            },
+            {
+                text: "What is a Colligative property? Assess the colligative properties of dilute solutions containing Non-volatile solutes.",
+                marks: 5,
+                semesters: ["Autumn 2024", "Spring 2024"],
+                isImportant: true,
+                cleanText: "colligative property dilute non-volatile solutes"
+            },
+            {
+                text: "Using Law of mass action derive an expression for the equilibrium constant Kc and Kp and also find the relationship between Kp & Kc. (General Reaction aA+bB ⇌ cC+dD)",
+                marks: 5,
+                semesters: ["Autumn 2024", "Spring 2024", "Autumn 2023", "Autumn 2021"],
+                isImportant: true,
+                cleanText: "law mass action equilibrium constant kc kp relationship"
+            },
+            {
+                text: "What is a Colloidal solution? Analyze the various properties of a colloidal solution.",
+                marks: 5,
+                semesters: ["Spring 2024", "Autumn 2023"],
+                isImportant: true,
+                cleanText: "colloidal solution properties"
+            },
+            {
+                text: "How do you remove ions from solution using dialysis and electro-dialysis?",
+                marks: 5,
+                semesters: ["Autumn 2023", "Spring 2023", "Autumn 2021"],
+                isImportant: true,
+                cleanText: "dialysis electro-dialysis remove ions"
+            },
+            {
+                text: "What is physical and chemical adsorption? Give example.",
+                marks: 5,
+                semesters: ["Spring 2024", "Autumn 2023"],
+                isImportant: true,
+                cleanText: "physical chemical adsorption example"
+            },
+            {
+                text: "Define lowering of vapor pressure. Develop an equation for the determination of molecular weight of a solute from the relative lowering of vapor pressure.",
+                marks: 5,
+                semesters: ["Spring 2025"],
+                isImportant: false,
+                cleanText: "lowering of vapor pressure molecular weight equation"
+            },
+            {
+                text: "Calculate the molarity and ppb concentration of a solution containing 9.5 g of Ca(OH)₂ dissolved in 1000 ml solution.",
+                marks: 5,
+                semesters: ["Spring 2025"],
+                isImportant: false,
+                cleanText: "calculate molarity ppb concentration Ca(OH)2"
+            },
+            {
+                text: "What are N type and P type semiconductors?",
+                marks: 5,
+                semesters: ["Spring 2025"],
+                isImportant: false,
+                cleanText: "n type p type semiconductors"
+            },
+            {
+                text: "What signs of ΔH and ΔS in the case of physical and chemical adsorption are expected? Justify your answer.",
+                marks: 5,
+                semesters: ["Spring 2025"],
+                isImportant: false,
+                cleanText: "delta h delta s adsorption signs"
+            },
+            {
+                text: "State and explain Raoult's Law. Tabulate various types of solutions present.",
+                marks: 5,
+                semesters: ["Autumn 2024", "Spring 2023"],
+                isImportant: true,
+                cleanText: "raoult's law types of solutions"
+            },
+            {
+                text: "Explain the Faraday's Theory and electrolysis process in a Cell. (Related to Prove m=Z)",
+                marks: 5,
+                semesters: ["Autumn 2024", "Spring 2024"],
+                isImportant: true,
+                cleanText: "faraday's theory electrolysis m=z"
+            },
+            {
+                text: "Derive the Langmuir Adsorption Isotherm with its hypothesis.",
+                marks: 5,
+                semesters: ["Autumn 2024", "Autumn 2021"],
+                isImportant: true,
+                cleanText: "langmuir adsorption isotherm hypothesis"
+            },
+            {
+                text: "What are the Molarity, Molality and Normality?",
+                marks: 5,
+                semesters: ["Autumn 2021"],
+                isImportant: false,
+                cleanText: "molarity molality normality"
+            },
+            {
+                text: "Explain properties of solution and electro-dialysis process.",
+                marks: 5,
+                semesters: ["Autumn 2021"],
+                isImportant: false,
+                cleanText: "properties solution electro-dialysis"
+            },
+            {
+                text: "What is the Tyndall effect, Gel and Suspension - define?",
+                marks: 5,
+                semesters: ["Autumn 2021"],
+                isImportant: false,
+                cleanText: "tyndall effect gel suspension"
+            },
+            {
+                text: "Draw the diagram of different types of purification process of solution and explain logically.",
+                marks: 5,
+                semesters: ["Autumn 2021"],
+                isImportant: false,
+                cleanText: "diagram purification process solution"
+            }
+        ];
+
+        // --- 2. THEME MANAGEMENT ---
+        let currentTheme = 'light';
+        const themes = ['light', 'dark', 'red'];
+        const body = document.body;
+        const themeIcon = document.getElementById('theme-icon');
+
+        const updateThemeIcon = (theme) => {
+            // Sun for light, Moon for dark, Flame for red
+            let svgContent = '';
+            if (theme === 'light') {
+                svgContent = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>'; // Sun
+            } else if (theme === 'dark') {
+                svgContent = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>'; // Moon
+            } else if (theme === 'red') {
+                 // A simple flame/fire icon (made from circles and path)
+                svgContent = '<path d="M12 2c-1 0-3 1-3 3s1 4 3 4c2 0 4-3 4-5s-1-3-3-3zm-2 9c-2 0-3 1-3 3s1 4 3 4c2 0 4-3 4-5s-1-3-3-3zM12 18a1 1 0 100-2 1 1 0 000 2z" fill="currentColor"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22a10 10 0 0010-10c0-1.85-.5-3.6-1.39-5.18L12 1v21z" opacity="0"></path>';
+            }
+            themeIcon.innerHTML = svgContent;
+        };
+
+        const toggleTheme = () => {
+            const currentIndex = themes.indexOf(currentTheme);
+            const nextIndex = (currentIndex + 1) % themes.length;
+            const nextTheme = themes[nextIndex];
+
+            body.classList.remove(`dark`); // Remove Tailwind's dark class in case it was applied by default
+            body.setAttribute('data-theme', nextTheme);
+
+            if (nextTheme === 'dark') {
+                body.classList.add('dark');
+            } else {
+                body.classList.remove('dark');
+            }
+
+            currentTheme = nextTheme;
+            updateThemeIcon(currentTheme);
+            // Re-render to ensure card borders/shadows update if they depend on the theme
+            filterQuestions(document.getElementById('search-input').value);
+        };
+
+        // Initialize theme on load
+        document.addEventListener('DOMContentLoaded', () => {
+            toggleTheme(); // Set initial theme to 'dark' or 'red'
+            toggleTheme(); // Set initial theme to 'light' (if starting from light)
+        });
+
+
+        // --- 3. QUESTION RENDERING LOGIC ---
+        const questionsList = document.getElementById('questions-list');
+        const noResults = document.getElementById('no-results');
+
+        const filterQuestions = (searchTerm) => {
+            const query = searchTerm.toLowerCase().trim();
+            const filtered = questionsData.filter(q =>
+                q.cleanText.includes(query) ||
+                q.text.toLowerCase().includes(query)
+            );
+            renderQuestions(filtered);
+        };
+
+        const renderQuestions = (questions) => {
+            questionsList.innerHTML = '';
+
+            if (questions.length === 0) {
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            noResults.classList.add('hidden');
+
+            questions.forEach(q => {
+                const card = document.createElement('div');
+                card.className = `card-bg p-5 rounded-xl border-t-4 border-accent transition-all duration-300 transform hover:scale-[1.02]`;
+
+                // Importance Tag
+                const importanceTag = q.isImportant ? `
+                    <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                        <svg class="w-4 h-4 mr-1 fill-current" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zM13 18h-2v-2h2v2zm0-4h-2V9h2v5z"/></svg>
+                        Important (Repeated)
+                    </span>
+                ` : '';
+
+                // Semester Tags
+                const semesterTags = q.semesters.map(s =>
+                    `<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200" data-theme-aware-bg>${s}</span>`
+                ).join('');
+
+                card.innerHTML = `
+                    <!-- Header -->
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold primary-text leading-tight">${importanceTag}</h3>
+                        <div class="text-3xl font-extrabold accent-text">${q.marks}</div>
+                    </div>
+
+                    <!-- Question Text -->
+                    <p class="mb-4 text-lg primary-text font-medium">
+                        ${q.text}
+                    </p>
+
+                    <!-- Details -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between border-t border-gray-200 dark:border-gray-600 pt-3">
+                            <span class="text-sm font-semibold primary-text">Marks:</span>
+                            <span class="text-lg font-extrabold accent-text">${q.marks}</span>
+                        </div>
+                        <div class="mt-2">
+                            <span class="text-sm font-semibold primary-text block mb-1">Appeared In:</span>
+                            <div class="flex flex-wrap gap-2">
+                                ${semesterTags}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                questionsList.appendChild(card);
+            });
+
+            // Update theme-aware backgrounds after rendering for red theme
+            if (currentTheme === 'red') {
+                document.querySelectorAll('[data-theme-aware-bg]').forEach(el => {
+                    el.classList.add('bg-red-700', 'text-red-50');
+                    el.classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-600', 'dark:text-gray-200');
+                });
+            }
+        };
+
+        // Initial render
+        renderQuestions(questionsData);
+    </script>
+</body>
+</html>
